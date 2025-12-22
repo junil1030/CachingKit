@@ -55,11 +55,19 @@ public final class CachingKit {
     ///   - url: Image URL
     ///   - targetSize: Target size for resizing
     ///   - cacheStrategy: Caching strategy (default: .both)
+    ///   - headers: Custom headers (optional, merged with defaultHeaders)
     /// - Returns: Loaded image or nil
-    public func loadImage(url: URL, targetSize: CGSize, cacheStrategy: CacheStrategy = .both) async -> UIImage? {
+    public func loadImage(url: URL, targetSize: CGSize, cacheStrategy: CacheStrategy = .both, headers: [String: String]? = nil) async -> UIImage? {
         guard let cacheManager = cacheManager else {
             return nil
         }
+
+        // Merge default headers with custom headers (custom headers override defaults)
+        var mergedHeaders = configuration.defaultHeaders
+        if let headers = headers {
+            mergedHeaders.merge(headers) { (_, new) in new }
+        }
+        let finalHeaders = mergedHeaders.isEmpty ? nil : mergedHeaders
 
         // Generate cache key
         let cacheKey = generateCacheKey(url: url, size: targetSize)
@@ -79,7 +87,8 @@ public final class CachingKit {
             // If TTL expired and has ETag, try revalidation
             let result = try await networkLoader.downloadImage(
                 url: url,
-                etag: isTTLExpired ? existingETag : nil
+                etag: isTTLExpired ? existingETag : nil,
+                headers: finalHeaders
             )
 
             switch result {
