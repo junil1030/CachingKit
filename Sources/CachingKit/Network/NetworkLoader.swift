@@ -40,8 +40,9 @@ actor NetworkLoader {
     /// - Parameters:
     ///   - url: 이미지 URL
     ///   - etag: 기존 ETag (있으면 If-None-Match 헤더 추가)
+    ///   - headers: 커스텀 헤더 (optional)
     /// - Returns: 다운로드 결과
-    func downloadImage(url: URL, etag: String? = nil) async throws -> ImageDownloadResult {
+    func downloadImage(url: URL, etag: String? = nil, headers: [String: String]? = nil) async throws -> ImageDownloadResult {
         // 이미 진행 중인 요청이 있으면 그것을 기다림 (중복 방지)
         if let ongoingTask = ongoingTasks[url] {
             return try await ongoingTask.value
@@ -53,7 +54,7 @@ actor NetworkLoader {
                 ongoingTasks.removeValue(forKey: url)
             }
 
-            return try await performDownload(url: url, etag: etag)
+            return try await performDownload(url: url, etag: etag, headers: headers)
         }
 
         ongoingTasks[url] = task
@@ -102,9 +103,17 @@ actor NetworkLoader {
     /// - Parameters:
     ///   - url: 이미지 URL
     ///   - etag: 기존 ETag
+    ///   - headers: 커스텀 헤더
     /// - Returns: 다운로드 결과
-    private func performDownload(url: URL, etag: String?) async throws -> ImageDownloadResult {
+    private func performDownload(url: URL, etag: String?, headers: [String: String]?) async throws -> ImageDownloadResult {
         var request = URLRequest(url: url)
+
+        // 커스텀 헤더 추가
+        if let headers = headers {
+            for (key, value) in headers {
+                request.setValue(value, forHTTPHeaderField: key)
+            }
+        }
 
         // ETag가 있으면 If-None-Match 헤더 추가
         if let etag = etag {
