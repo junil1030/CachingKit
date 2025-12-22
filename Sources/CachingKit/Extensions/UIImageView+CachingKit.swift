@@ -34,12 +34,14 @@ extension UIImageView {
     ///   - placeholder: Placeholder image (shown while loading)
     ///   - targetSize: Target size (uses bounds.size if nil)
     ///   - cacheStrategy: Caching strategy (default: .both)
+    ///   - headers: Custom headers (optional)
     ///   - cachingKit: CachingKit instance (default: .shared)
     public func ck_setImage(
         with url: URL?,
         placeholder: UIImage? = nil,
         targetSize: CGSize? = nil,
         cacheStrategy: CacheStrategy = .both,
+        headers: [String: String]? = nil,
         cachingKit: CachingKit = .shared
     ) {
         // Cancel previous task
@@ -75,7 +77,8 @@ extension UIImageView {
             if let loadedImage = await cachingKit.loadImage(
                 url: url,
                 targetSize: finalTargetSize,
-                cacheStrategy: cacheStrategy
+                cacheStrategy: cacheStrategy,
+                headers: headers
             ) {
                 // Check if task was cancelled after load
                 guard !Task.isCancelled else {
