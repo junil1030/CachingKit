@@ -10,6 +10,8 @@ High-performance image caching library for iOS with dual-tier caching, ETag-base
 - **Image Optimization**: Automatic downsampling and resizing to reduce memory usage
 - **Thread-Safe**: Actor-based concurrency using Swift's modern async/await
 - **App Groups Support**: Share cache across app extensions, widgets, and Live Activities
+- **SwiftUI Support**: Native SwiftUI `CachedAsyncImage` view with async/await
+- **Custom Headers**: Configure default and per-request HTTP headers for authenticated endpoints
 - **Comprehensive Statistics**: Track hit rates, download stats, and cache size
 
 ## Requirements
@@ -66,6 +68,40 @@ imageView.ck_setImage(
 imageView.ck_cancelImageLoad()
 ```
 
+### SwiftUI Integration
+
+```swift
+import CachingKit
+import SwiftUI
+
+// Basic usage
+CachedAsyncImage(
+    url: imageURL,
+    targetSize: CGSize(width: 300, height: 300)
+)
+.frame(width: 300, height: 300)
+.cornerRadius(8)
+
+// Custom content and placeholder
+CachedAsyncImage(
+    url: imageURL,
+    targetSize: CGSize(width: 200, height: 200)
+) { image in
+    image
+        .resizable()
+        .aspectRatio(contentMode: .fill)
+} placeholder: {
+    ProgressView()
+}
+
+// With custom headers
+CachedAsyncImage(
+    url: imageURL,
+    targetSize: CGSize(width: 300, height: 300),
+    headers: ["Authorization": "Bearer \(token)"]
+)
+```
+
 ### Custom Configuration
 
 ```swift
@@ -84,6 +120,41 @@ let cachingKit = CachingKit(configuration: config)
 
 // Or update shared instance
 _ = CachingKit(configuration: config)
+```
+
+### Custom Headers
+
+```swift
+import CachingKit
+
+// Configure default headers for all requests
+var config = CacheConfiguration()
+config.defaultHeaders = [
+    "Authorization": "Bearer \(accessToken)",
+    "User-Agent": "MyApp/1.0"
+]
+let cachingKit = CachingKit(configuration: config)
+
+// Or add headers per request (merged with default headers)
+let image = await CachingKit.shared.loadImage(
+    url: imageURL,
+    targetSize: CGSize(width: 300, height: 300),
+    headers: ["X-Custom-Header": "value"]
+)
+
+// UIImageView with custom headers
+imageView.ck_setImage(
+    with: imageURL,
+    targetSize: CGSize(width: 200, height: 200),
+    headers: ["Authorization": "Bearer \(token)"]
+)
+
+// SwiftUI with custom headers
+CachedAsyncImage(
+    url: imageURL,
+    targetSize: CGSize(width: 300, height: 300),
+    headers: ["Authorization": "Bearer \(token)"]
+)
 ```
 
 ### Storage Providers
