@@ -21,8 +21,11 @@ public struct CacheConfiguration {
     /// Time-to-live (seconds)
     public let ttl: TimeInterval
 
-    /// Default headers to be added to all network requests
+    /// Default headers to be added to all network requests (static)
     public let defaultHeaders: [String: String]
+
+    /// Dynamic header provider (e.g., for authentication tokens)
+    public let headerProvider: (any HeaderProvider)?
 
     /// Initialize with custom configuration
     /// - Parameters:
@@ -31,12 +34,14 @@ public struct CacheConfiguration {
     ///   - diskLimit: Disk limit in bytes (default: 150MB)
     ///   - ttl: Time-to-live in seconds (default: 7 days)
     ///   - defaultHeaders: Default headers for all requests (default: empty)
+    ///   - headerProvider: Dynamic header provider for authentication tokens (optional)
     public init(
         storageProvider: StoragePathProvider = .default,
         memoryLimit: Int? = nil,
         diskLimit: Int = 150 * 1024 * 1024,
         ttl: TimeInterval = 7 * 24 * 60 * 60,
-        defaultHeaders: [String: String] = [:]
+        defaultHeaders: [String: String] = [:],
+        headerProvider: (any HeaderProvider)? = nil
     ) {
         self.storageProvider = storageProvider
         self.memoryLimit = memoryLimit ?? {
@@ -46,5 +51,6 @@ public struct CacheConfiguration {
         self.diskLimit = diskLimit
         self.ttl = ttl
         self.defaultHeaders = defaultHeaders
+        self.headerProvider = headerProvider
     }
 }
