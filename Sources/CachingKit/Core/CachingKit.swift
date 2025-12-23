@@ -55,18 +55,27 @@ public final class CachingKit {
     ///   - url: Image URL
     ///   - targetSize: Target size for resizing
     ///   - cacheStrategy: Caching strategy (default: .both)
-    ///   - headers: Custom headers (optional, merged with defaultHeaders)
+    ///   - headers: Custom headers (optional, merged with defaultHeaders and headerProvider)
     /// - Returns: Loaded image or nil
     public func loadImage(url: URL, targetSize: CGSize, cacheStrategy: CacheStrategy = .both, headers: [String: String]? = nil) async -> UIImage? {
         guard let cacheManager = cacheManager else {
             return nil
         }
 
-        // Merge default headers with custom headers (custom headers override defaults)
+        // Merge headers in priority order: defaultHeaders < headerProvider < custom headers
         var mergedHeaders = configuration.defaultHeaders
+
+        // Add dynamic headers from headerProvider
+        if let headerProvider = configuration.headerProvider {
+            let dynamicHeaders = await headerProvider.headers()
+            mergedHeaders.merge(dynamicHeaders) { (_, new) in new }
+        }
+
+        // Add custom headers (highest priority)
         if let headers = headers {
             mergedHeaders.merge(headers) { (_, new) in new }
         }
+
         let finalHeaders = mergedHeaders.isEmpty ? nil : mergedHeaders
 
         // Generate cache key
